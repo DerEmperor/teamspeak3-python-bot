@@ -114,6 +114,20 @@ def send_message_to_everyone(conn, message):
         Bot.send_msg_to_client(conn, client.get("clid", '-1'), message)
 
 
+def poke_message_to_everyone(conn, message):
+    client_list = conn.clientlist()
+    for client in client_list:
+        Bot.poke_msg_to_client(conn, client.get("clid", '-1'), message)
+
+
+@command('pokeeveryone', )
+@group('Kaiser', 'Truchsess', )
+def message_everyone(sender, msg):
+    message = msg[msg.index(" ") + 1:]
+    poke_message_to_everyone(bot.ts3conn, message)
+    Bot.send_msg_to_client(bot.ts3conn, sender, "Done")
+
+
 @command('messageeveryone', )
 @group('Kaiser', 'Truchsess', )
 def message_everyone(sender, msg):

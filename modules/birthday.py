@@ -4,7 +4,7 @@ from threading import Thread
 import Bot
 from Moduleloader import *
 import threading
-from modules.utils import send_message_to_everyone
+from modules.utils import send_message_to_everyone, poke_message_to_everyone
 import json
 import datetime
 from time import sleep
@@ -251,15 +251,15 @@ class BirthdayNotifier(Thread):
             BirthdayNotifier.logger.debug("BirthdayNotifier running!")
             # wait until TIME_FOR_CHECK
             # message everyone about birthday
+            bday = self.get_next_birthday()
             for delta in TIME_FOR_NOTIFICATION:
                 date = today()
                 timepoint = datetime.datetime(date.year, date.month, date.day, 23, 59, 59, 999999) - delta
                 sleep_until(timepoint)
-                bday = self.get_next_birthday()
                 if bday.birthday == (today() + datetime.timedelta(days=1)):
                     #  tomorrow is a birthday
                     if bday.age:
-                        message = f'{bday.name} wird {delta_to_string(delta)} {bday.age}.'
+                        message = f'{bday.name} wird in {delta_to_string(delta)} {bday.age}.'
                     else:
                         message = f'{bday.name} hat in {delta_to_string(delta)} Geburtstag.'
                     send_message_to_everyone(bot.ts3conn, message)
@@ -269,8 +269,15 @@ class BirthdayNotifier(Thread):
             midnight = datetime.datetime(date.year, date.month, date.day, 0, 0, 0, 1) + datetime.timedelta(days=1)
             sleep_until(midnight)
             self.refresh_todays_birthday()
+            if self.todays_birthday:
+                #  today is a birthday
+                if bday.age:
+                    message = f'{bday.name} wird heute {bday.age}.'
+                else:
+                    message = f'{bday.name} hat heute Geburtstag.'
+                poke_message_to_everyone(bot.ts3conn, message)
 
-        BirthdayNotifier.logger.warning("AFKMover stopped!")
+        BirthdayNotifier.logger.warning("BirthdayNotifier stopped!")
 
     def read_data(self):
         with open(self.birthday_file, 'r') as file:

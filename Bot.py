@@ -15,6 +15,24 @@ def stop_conn(ts3conn):
     ts3conn.stop_recv.set()
 
 
+def poke_msg_to_client(ts3conn, clid, msg):
+    """
+    Convenience method for poking a message to a client without having a bot object.
+    :param ts3conn: TS3Connection to poke message on.
+    :type ts3conn: TS3Connection
+    :param clid: Client id of the client to poke too.
+    :type clid: int
+    :param msg: Message to poke
+    :type msg: str
+    :return:
+    """
+    try:
+        ts3conn.poketextmessage(clid=clid, msg=msg)
+    except ts3.TS3Connection.TS3QueryException:
+        logger = logging.getLogger("bot")
+        logger.exception("Error poking a message to clid " + str(clid))
+
+
 def send_msg_to_client(ts3conn, clid, msg):
     """
     Convenience method for sending a message to a client without having a bot object.
@@ -37,6 +55,7 @@ class Ts3Bot:
     """
     Teamspeak 3 Bot with module support.
     """
+
     def get_channel_id(self, name):
         """
         Covenience method for getting a channel by name.
@@ -92,7 +111,9 @@ class Ts3Bot:
                                                            use_ssh=self.is_ssh, username=self.user,
                                                            password=self.password, accept_all_keys=self.accept_all_keys,
                                                            host_key_file=self.host_key_file,
-                                                           use_system_hosts=self.use_system_hosts, sshtimeout=self.sshtimeout, sshtimeoutlimit=self.sshtimeoutlimit)
+                                                           use_system_hosts=self.use_system_hosts,
+                                                           sshtimeout=self.sshtimeout,
+                                                           sshtimeoutlimit=self.sshtimeoutlimit)
             # self.ts3conn.login(self.user, self.password)
         except ts3.TS3Connection.TS3QueryException:
             self.logger.exception("Error while connecting, IP propably not whitelisted or Login data wrong!")
@@ -149,7 +170,8 @@ class Ts3Bot:
             self.ts3conn.quit()
 
     def __init__(self, host, port, serverid, user, password, defaultchannel, botname, logger, plugins, ssh="False",
-                 acceptallsshkeys="False", sshhostkeyfile=None, sshloadsystemhostkeys="False", sshtimeout=None, sshtimeoutlimit=3, *_, **__):
+                 acceptallsshkeys="False", sshhostkeyfile=None, sshloadsystemhostkeys="False", sshtimeout=None,
+                 sshtimeoutlimit=3, *_, **__):
         """
         Create a new Ts3Bot.
         :param host: Host to connect to, can be a IP or a host name
