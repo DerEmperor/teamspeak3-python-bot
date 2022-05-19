@@ -63,7 +63,7 @@ def delta_to_string(delta: datetime.timedelta):
     return f'{sec} s'
 
 
-@command('nextbirthday', )
+@command('nextbirthday', 'nextbday', )
 @group('Kaiser', 'Truchsess', 'Bürger')
 def next_birthday(sender, msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, str(birthdayNotifier.get_next_birthday()))
