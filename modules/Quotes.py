@@ -64,6 +64,7 @@ def inform(evt):
 
 
 @Moduleloader.command('addquote',)
+@group('Kaiser', 'Truchsess', 'Bürger')
 def add_quote(sender, msg):
     """
     Add a quote.

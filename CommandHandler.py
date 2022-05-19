@@ -25,7 +25,7 @@ class CommandHandler:
         self.logger.propagate = 0
         self.handlers = {}
         # Default groups if group not specified.
-        self.accept_from_groups = ['Server Admin', 'Moderator']
+        self.accept_from_groups = ['Kaiser', 'Truchsess']
 
     def add_handler(self, handler, command):
         """

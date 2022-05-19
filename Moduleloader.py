@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import configparser
 import importlib
 import logging
 import sys
+import re
 import modules
+from typing import List
+
 setups = []
 exits = []
 plugin_modules = {}
@@ -16,6 +21,14 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.info("Configured Moduleloader logger")
 logger.propagate = 0
+
+command_pattern = re.compile(r'(?:\'([^\']*)\')|(?:\"([^\"]*)\")|([^\'\"\s][^\s]*)')
+
+
+def split_command(_command: str) -> List[str]:
+    matches = command_pattern.findall(_command)
+    command_list = [match[0] or match[1] or match[2] for match in matches]
+    return command_list
 
 
 def load_modules(bot, config):
@@ -35,11 +48,11 @@ def load_modules(bot, config):
 
     for plugin in plugins.items():
         try:
-            plugin_modules[plugin[0]] = importlib.import_module("modules."+plugin[1], package="modules")
+            plugin_modules[plugin[0]] = importlib.import_module("modules." + plugin[1], package="modules")
             plugin_modules[plugin[0]].pluginname = plugin[0]
             logger.info("Loaded module " + plugin[0])
         except:
-            logger.exception("While loading plugin " + str(plugin[0]) + " from modules."+plugin[1])
+            logger.exception("While loading plugin " + str(plugin[0]) + " from modules." + plugin[1])
     # Call all registered setup functions
     for setup_func in setups:
         try:
@@ -69,10 +82,12 @@ def event(*event_types):
     :param event_types: Event types to listen to
     :type event_types: list[TS3Event]
     """
+
     def register_observer(function):
         for event_type in event_types:
             event_handler.add_observer(function, event_type)
         return function
+
     return register_observer
 
 
@@ -80,13 +95,15 @@ def command(*command_list):
     """
     Decorator to register a function as a handler for text commands.
     :param command_list: Commands to handle.
-    :type command_list: list[str]
+    :type command_list
     :return:
     """
+
     def register_command(function):
         for text_command in command_list:
             command_handler.add_handler(function, text_command)
         return function
+
     return register_command
 
 
@@ -94,11 +111,13 @@ def group(*groups):
     """
     Decorator to specify which groups are allowed to use the commands specified for this function.
     :param groups: List of server groups that are allowed to use the commands associated with this function.
-    :type groups: list[str]
+    :type groups
     """
+
     def save_allowed_groups(func):
         func.allowed_groups = groups
         return func
+
     return save_allowed_groups
 
 

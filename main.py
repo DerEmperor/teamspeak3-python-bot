@@ -28,7 +28,7 @@ def restart_program():
     saving data) must be done before calling this function.
     """
     python = sys.executable
-    os.execl(python, python, * sys.argv)
+    os.execl(python, python, *sys.argv)
 
 
 def main():
@@ -47,6 +47,7 @@ def main():
             raise
         except:
             sys.excepthook(*sys.exc_info())
+
     threading.Thread.run = run
     global bot, logger
     logger = logging.getLogger("bot")
@@ -61,6 +62,7 @@ def main():
     sys.excepthook = exception_handler
     config = Bot.Ts3Bot.parse_config(logger)
     bot = Bot.Ts3Bot.bot_from_config(config)
+
 
 if __name__ == "__main__":
     main()

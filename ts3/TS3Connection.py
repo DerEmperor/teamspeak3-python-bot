@@ -9,6 +9,7 @@ import traceback
 
 import blinker
 
+import ts3.TS3Connection
 from . import Events
 from . import utilities
 from .Events import TS3Event
@@ -303,6 +304,19 @@ class TS3Connection:
         if event_listener is not None:
             for event in Events.text_events:
                 blinker.signal(event.name + "_private").connect(event_listener, weak=weak_ref)
+
+    def set_channel_name(self, cid, name):
+        try:
+            self._send("channeledit", [f"cid={cid}", f"channel_name={name}"])
+        except TS3QueryException as ex:
+            if ex.id != 771:
+                raise ex
+
+    def set_hostmessage(self, message):
+        self._send("serveredit", ["virtualserver_hostmessage_mode=2", f"virtualserver_hostmessage={message}"])
+
+    def disable_hostmessage(self):
+        self._send("serveredit", ["virtualserver_hostmessage_mode=0", "virtualserver_hostmessage=Disabled"])
 
     def register_for_server_events(self, event_listener=None, weak_ref=True):
         """

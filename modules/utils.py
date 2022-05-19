@@ -3,8 +3,9 @@ import Moduleloader
 import Bot
 import logging
 from ts3.TS3Connection import TS3QueryException
+
 __version__ = "0.4"
-bot = None
+bot: Bot.Ts3Bot = None
 logger = logging.getLogger("bot")
 
 
@@ -14,77 +15,63 @@ def setup(ts3bot):
     bot = ts3bot
 
 
-@command('hello',)
-@group('Server Admin',)
+@command('hello', )
+@group('Kaiser', )
 def hello(sender, msg):
-    Bot.send_msg_to_client(bot.ts3conn, sender, "Hello Admin!")
+    Bot.send_msg_to_client(bot.ts3conn, sender, "Hello your majesty!")
 
 
-@command('hello',)
-@group('Moderator',)
+@command('hello', )
+@group('Truchsess', )
 def hello(sender, msg):
-    Bot.send_msg_to_client(bot.ts3conn, sender, "Hello Moderator!")
+    Bot.send_msg_to_client(bot.ts3conn, sender, "Hello seneschal!")
 
 
-@command('hello',)
-@group('Normal',)
+@command('hello', )
+@group('Bürger', )
 def hello(sender, msg):
-    Bot.send_msg_to_client(bot.ts3conn, sender, "Hello Casual!")
+    Bot.send_msg_to_client(bot.ts3conn, sender, "Hello citizen!")
 
 
 @command('kickme', 'fuckme')
-@group('.*',)
+@group('.*', )
 def kickme(sender, msg):
     ts3conn = bot.ts3conn
     ts3conn.clientkick(sender, 5, "Whatever.")
 
 
-@command('mtest',)
+@command('mtest', )
+@group('Kaiser', )
 def mtest(sender, msg):
-    print("MTES")
-    channels = msg[len("!mtest "):].split()
-    print(channels)
+    channels = split_command(msg)[1:]
     ts3conn = bot.ts3conn
-    print(ts3conn.channelfind(channels[0]))
- 
+    answer = [ts3conn.channelfind(channel) for channel in channels]
+
+    Bot.send_msg_to_client(ts3conn, sender, str(answer))
 
 
 @command('multimove', 'mm')
-@group('Server Admin', 'Moderator')
+@group('Kaiser', 'Truchsess')
 def multi_move(sender, msg):
     """
     Move all clients from one channel to another.
     :param sender: Client id of sender that sent the command.
     :param msg: Sent command.
     """
-    channels = msg.split()[1:]
-    source_name = ""
-    dest_name = ""
+    channels = split_command(msg)[1:]
     source = None
     dest = None
     ts3conn = bot.ts3conn
-    if len(channels) < 2:
+    if len(channels) != 2:
         if sender != 0:
-            Bot.send_msg_to_client(ts3conn, sender, "Usage: multimove source destination")
+            Bot.send_msg_to_client(ts3conn, sender, "Usage: multimove <source> <destination>")
             return
-    elif len(channels) > 2:
-        channel_name_list = ts3conn.channel_name_list()
-        for channel_name in channel_name_list:
-            if msg[len("!multimove "):].startswith(channel_name):
-                source_name = channel_name
-                dest_name = msg[len("!multimove ") + len(source_name)+1:]
-    else:
-        source_name = channels[0]
-        dest_name = channels[1]
-    if source_name == "":
-        Bot.send_msg_to_client(ts3conn, sender, "Source channel not found")
-        return
-    if dest_name == "":
-        Bot.send_msg_to_client(ts3conn, sender, "Destination channel not found")
-        return
+    source_name = channels[0]
+    dest_name = channels[1]
     try:
         channel_matches = ts3conn.channelfind(source_name)
-        channel_candidates = [chan for chan in channel_matches if chan.get("channel_name", '-1').startswith(source_name)]
+        channel_candidates = [chan for chan in channel_matches if
+                              chan.get("channel_name", '-1').startswith(source_name)]
         if len(channel_candidates) == 1:
             source = channel_candidates[0].get("cid", '-1')
         elif len(channel_candidates) == 0:
@@ -97,7 +84,7 @@ def multi_move(sender, msg):
     try:
         channel_matches = ts3conn.channelfind(dest_name)
         channel_candidates = [chan for chan in channel_matches if chan.get("channel_name",
-            '-1').startswith(dest_name)]
+                                                                           '-1').startswith(dest_name)]
         if len(channel_candidates) == 1:
             dest = channel_candidates[0].get("cid", '-1')
         elif len(channel_candidates) == 0:
@@ -107,7 +94,8 @@ def multi_move(sender, msg):
             Bot.send_msg_to_client(ts3conn, sender, "Multiple destination channels found: " + ", ".join(channels))
     except TS3QueryException:
         Bot.send_msg_to_client(ts3conn, sender, "Destination channel not found")
-    if source != None and dest != None:
+
+    if source and dest:
         try:
             client_list = ts3conn.clientlist()
             client_list = [client for client in client_list if client.get("cid", '-1') == source]
@@ -117,31 +105,53 @@ def multi_move(sender, msg):
                 ts3conn.clientmove(int(dest), int(clid))
         except TS3QueryException as e:
             Bot.send_msg_to_client(ts3conn, sender, "Error moving clients: id = " +
-                    str(e.id) + e.message)
+                                   str(e.id) + e.message)
 
 
-@command('version',)
+def send_message_to_everyone(conn, message):
+    client_list = conn.clientlist()
+    for client in client_list:
+        Bot.send_msg_to_client(conn, client.get("clid", '-1'), message)
+
+
+@command('messageeveryone', )
+@group('Kaiser', 'Truchsess', )
+def message_everyone(sender, msg):
+    message = msg[msg.index(" ") + 1:]
+    send_message_to_everyone(bot.ts3conn, message)
+    Bot.send_msg_to_client(bot.ts3conn, sender, "Done")
+
+
+@command('echo', )
+@group('.*')
+def send_version(sender, msg):
+    messages = split_command(msg)[1:]
+    for message in messages:
+        Bot.send_msg_to_client(bot.ts3conn, sender, message)
+
+
+@command('version', )
 @group('.*')
 def send_version(sender, msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, __version__)
 
 
-@command('whoami',)
+@command('whoami', )
 @group('.*')
 def whoami(sender, msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, "None of your business!")
 
 
-@command('stop',)
-@group('Server Admin',)
+@command('stop', )
+@group('Kaiser', )
 def stop_bot(sender, msg):
     Moduleloader.exit_all()
     bot.ts3conn.quit()
     logger.warning("Bot was quit!")
 
 
-@command('restart',)
-@group('Server Admin', 'Moderator',)
+@command('restart', )
+@group('Kaiser', )
 def restart_bot(sender, msg):
     Moduleloader.exit_all()
     bot.ts3conn.quit()
@@ -149,7 +159,23 @@ def restart_bot(sender, msg):
     import main
     main.restart_program()
 
-@command('commandlist',)
-@group('Server Admin', 'Moderator',)
+
+@command('commandlist', 'commands')
+@group('Kaiser', 'Truchsess', 'Bürger')
 def get_command_list(sender, msg):
-    Bot.send_msg_to_client(bot.ts3conn, sender, list(bot.command_handler.handlers.keys()))
+    Bot.send_msg_to_client(bot.ts3conn, sender, str(list(bot.command_handler.handlers.keys())))
+
+
+@command('sethostmessage', 'hostmessage', )
+@group('Kaiser', )
+def set_hostmessage(sender, msg):
+    message = msg[msg.index(" ") + 1:]
+    bot.ts3conn.set_hostmessage(message)
+    Bot.send_msg_to_client(bot.ts3conn, sender, "set hostmessage:" + message)
+
+
+@command('resethostmessage', 'deletehostmessage', 'disablehostmessage', )
+@group('Kaiser', )
+def set_hostmessage(sender, msg):
+    bot.ts3conn.disable_hostmessage()
+    Bot.send_msg_to_client(bot.ts3conn, sender, "disable hostmessage")

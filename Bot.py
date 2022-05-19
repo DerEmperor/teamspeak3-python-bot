@@ -4,7 +4,7 @@ from distutils.util import strtobool
 import configparser
 
 import ts3.TS3Connection
-from ts3.TS3Connection import TS3QueryException
+from ts3.TS3Connection import TS3QueryException, TS3Connection
 from ts3.TS3QueryExceptionType import TS3QueryExceptionType
 import EventHandler
 import CommandHandler
@@ -19,7 +19,7 @@ def send_msg_to_client(ts3conn, clid, msg):
     """
     Convenience method for sending a message to a client without having a bot object.
     :param ts3conn: TS3Connection to send message on.
-    :type ts3conn: ts3.TS3Connection
+    :type ts3conn: TS3Connection
     :param clid: Client id of the client to send too.
     :type clid: int
     :param msg: Message to send
@@ -172,7 +172,7 @@ class Ts3Bot:
         self.command_handler = None
         self.channel = None
         self.logger = logger
-        self.ts3conn = None
+        self.ts3conn: TS3Connection = None
         self.is_ssh = bool(strtobool(ssh))
         # Strtobool returns 1/0 ...
         self.accept_all_keys = bool(strtobool(acceptallsshkeys))

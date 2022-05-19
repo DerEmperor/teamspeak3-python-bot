@@ -1,21 +1,24 @@
 """AfkMover Module for the Teamspeak3 Bot."""
+from __future__ import annotations
+
 from threading import Thread
-import sys
 import traceback
 from Moduleloader import *
 import ts3.Events as Events
 import threading
-import ts3
 import Bot
 from ts3.utilities import TS3Exception
-afkMover = None
+
+afkMover: AfkMover = None
 afkStopper = threading.Event()
-bot = None
+bot: Bot.Ts3Bot = None
 autoStart = True
-channel_name = "AFK"
+AFK_CHANNEL = "Bin weg"
+channel_name = AFK_CHANNEL
 
 
-@command('startafk', 'afkstart', 'afkmove',)
+@command('startafk', 'afkstart', 'afkmove', )
+@group('Kaiser', )
 def start_afkmover(sender=None, msg=None):
     """
     Start the AfkMover by clearing the afkStopper signal and starting the mover.
@@ -28,6 +31,7 @@ def start_afkmover(sender=None, msg=None):
 
 
 @command('stopafk', 'afkstop')
+@group('Kaiser', )
 def stop_afkmover(sender=None, msg=None):
     """
     Stop the AfkMover by setting the afkStopper signal and undefining the mover.
@@ -36,7 +40,9 @@ def stop_afkmover(sender=None, msg=None):
     afkStopper.set()
     afkMover = None
 
+
 @command('afkgetclientchannellist')
+@group('Kaiser', 'Truchsess', 'Bürger')
 def get_afk_list(sender=None, msg=None):
     """
     Get afkmover saved client channels. Mainly for debugging.
@@ -45,7 +51,7 @@ def get_afk_list(sender=None, msg=None):
         Bot.send_msg_to_client(bot.ts3conn, sender, str(afkMover.client_channels))
 
 
-@event(Events.ClientLeftEvent,)
+@event(Events.ClientLeftEvent, )
 def client_left(event):
     """
     Clean up leaving clients.
@@ -57,8 +63,8 @@ def client_left(event):
 
 
 @setup
-def setup(ts3bot,channel="AFK"):
-    global bot,channel_name
+def setup(ts3bot, channel=AFK_CHANNEL):
+    global bot, channel_name
     bot = ts3bot
     channel_name = channel
     if autoStart:
@@ -87,7 +93,7 @@ class AfkMover(Thread):
     logger.info("Configured afk logger")
     logger.propagate = 0
 
-    def __init__(self, event, ts3conn):
+    def __init__(self, _event, ts3conn):
         """
         Create a new AfkMover object.
         :param event: Event to signalize the AfkMover to stop moving.
@@ -96,7 +102,7 @@ class AfkMover(Thread):
         :type: TS3Connection
         """
         Thread.__init__(self)
-        self.stopped = event
+        self.stopped = _event
         self.ts3conn = ts3conn
         self.afk_channel = self.get_afk_channel(channel_name)
         self.client_channels = {}
@@ -138,8 +144,9 @@ class AfkMover(Thread):
                 if "cid" not in client.keys():
                     AfkMover.logger.error("Client without cid!")
                     AfkMover.logger.error(str(client))
-                elif "client_away" in client.keys() and client.get("client_away", '0') == '1' and int(client.get("cid", '-1')) != \
-                        int(self.afk_channel):
+                elif "client_away" in client.keys() and \
+                        client.get("client_away", '0') == '1' and \
+                        int(client.get("cid", '-1')) != int(self.afk_channel):
                     awaylist.append(client)
             return awaylist
         else:
@@ -151,12 +158,12 @@ class AfkMover(Thread):
         Get list of clients in the afk channel, but not away.
         :return: List of clients who are back from afk.
         """
-        clientlist = [client for client in self.afk_list if client.get("client_away", '1') == '0' and int(client.get("cid",
-                                                                                                                  '-1'))
+        clientlist = [client for client in self.afk_list if
+                      client.get("client_away", '1') == '0' and int(client.get("cid", '-1'))
                       == int(self.afk_channel)]
         return clientlist
 
-    def get_afk_channel(self, name="AFK"):
+    def get_afk_channel(self, name=AFK_CHANNEL):
         """
         Get the channel id of the channel specified by name.
         :param name: Channel name
